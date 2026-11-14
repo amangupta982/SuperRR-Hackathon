@@ -14,6 +14,8 @@ T20 cricket matches are won and lost in moments of intense stress: mounting requ
 
 This repository implements the **Rajasthan Royals Situational Pressure & Clutch Index (CBI)**. By reconstructing the exact match state space across **883 matches (200,999 deliveries)** from 2022 to 2026 across IPL and T20 Internationals, our system quantifies delivery-level pressure ($PI \in [0, 1]$) and evaluates how players perform in high-pressure match situations ($PI \ge 0.60$) compared with their usual performance baselines.
 
+Crucially, our framework incorporates **Hazard-Preserved Baseline Normalization**: recognizing that the entire league experiences an average drop of -32.6% in batting average under pressure, it eliminates the artificial penalty on pure finishers whose baselines are inflated by 'not-outs' in easy games.
+
 ---
 
 ## 🏆 Final Official Top 10 Rankings
@@ -21,32 +23,32 @@ This repository implements the **Rajasthan Royals Situational Pressure & Clutch 
 ### Top 10 Batters Under Pressure
 | Rank | Player Name | Player ID | CBI Score | HP Balls | HP Runs | HP SR | Base SR | SR Lift ($\Delta$) | HP Avg | Consistency Rate |
 |:---:|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **1** | **Namboori Tilak Varma** | `7897` | **70.10** | 637 | 1,230 | 193.09 | 125.98 | **+67.11** | 42.41 | **80.0%** |
-| **2** | **Suryakumar Yadav** | `1699` | **69.59** | 492 | 1,030 | 209.35 | 157.12 | **+52.23** | 38.15 | **83.3%** |
-| **3** | **Rishabh Pant** | `4703` | **67.55** | 292 | 572 | 195.89 | 126.79 | **+69.10** | 30.11 | **94.4%** |
-| **4** | **Tim David** | `6396` | **66.69** | 594 | 1,188 | 200.00 | 156.65 | **+43.35** | 34.94 | **87.2%** |
-| **5** | **Shashank Singh** | `2756` | **65.47** | 303 | 572 | 188.78 | 129.57 | **+59.21** | 44.00 | **70.0%** |
-| **6** | **Tristan Stubbs** | `20702` | **65.44** | 488 | 912 | 186.89 | 119.53 | **+67.36** | 38.00 | **72.4%** |
-| **7** | **Naman Dhir** | `37052` | **65.38** | 215 | 428 | 199.07 | 150.80 | **+48.27** | 30.57 | **93.8%** |
-| **8** | **Dhruv Jurel** | `7260` | **64.88** | 279 | 530 | 189.96 | 130.44 | **+59.52** | 35.33 | **81.3%** |
-| **9** | **Sikandar Raza** | `2984` | **60.66** | 234 | 438 | 187.18 | 119.79 | **+67.39** | 27.38 | **81.3%** |
-| **10** | **Heinrich Klaasen** | `4260` | **59.97** | 468 | 905 | 193.38 | 153.64 | **+39.74** | 30.17 | **81.8%** |
+| **1** | **Namboori Tilak Varma** | `7897` | **70.99** | 637 | 1,230 | 193.09 | 125.98 | **+67.11** | 42.41 | **80.0%** |
+| **2** | **Suryakumar Yadav** | `1699` | **69.58** | 492 | 1,030 | 209.35 | 157.12 | **+52.23** | 38.15 | **83.3%** |
+| **3** | **Tim David** | `6396` | **67.24** | 594 | 1,188 | 200.00 | 156.65 | **+43.35** | 34.94 | **87.2%** |
+| **4** | **Rishabh Pant** | `4703` | **67.13** | 292 | 572 | 195.89 | 126.79 | **+69.10** | 30.11 | **94.4%** |
+| **5** | **Tristan Stubbs** | `20702` | **66.02** | 488 | 912 | 186.89 | 119.53 | **+67.36** | 38.00 | **72.4%** |
+| **6** | **Shashank Singh** | `2756` | **64.99** | 303 | 572 | 188.78 | 129.57 | **+59.21** | 44.00 | **70.0%** |
+| **7** | **Dhruv Jurel** | `7260` | **64.25** | 279 | 530 | 189.96 | 130.44 | **+59.52** | 35.33 | **81.3%** |
+| **8** | **Naman Dhir** | `37052` | **64.01** | 215 | 428 | 199.07 | 150.80 | **+48.27** | 30.57 | **93.8%** |
+| **9** | **Heinrich Klaasen** | `4260` | **60.51** | 468 | 905 | 193.38 | 153.64 | **+39.74** | 30.17 | **81.8%** |
+| **10** | **Rinku Singh** | `4708` | **60.12** | 602 | 1,113 | 184.88 | 124.30 | **+60.58** | 30.92 | **70.2%** |
 
 ---
 
 ### Top 10 Bowlers Under Pressure
 | Rank | Player Name | Player ID | CBI Score | HP Legal Balls | HP Wkts | HP Econ | Base Econ | Resistance ($\Delta$) | Balls/Wkt | Consistency Rate |
 |:---:|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **1** | **Sunil Narine** | `781` | **81.78** | 299 | 26 | **6.28** | 7.01 | **+0.73** | 11.50 | **83.3%** |
-| **2** | **Jasprit Bumrah** | `2933` | **73.64** | 554 | 43 | **7.18** | 7.30 | **+0.12** | 12.88 | **74.1%** |
-| **3** | **Shaheen Afridi** | `6355` | **68.52** | 254 | 26 | **8.01** | 7.99 | **-0.01** | 9.77 | **69.0%** |
-| **4** | **Matheesha Pathirana** | `8661` | **67.45** | 529 | 49 | **8.89** | 8.74 | **-0.15** | 10.80 | **69.4%** |
-| **5** | **Mitchell Santner** | `4101` | **65.43** | 322 | 23 | **7.77** | 7.37 | **-0.40** | 14.00 | **71.4%** |
-| **6** | **Rasikh Salam** | `7327` | **64.59** | 217 | 26 | **9.54** | 9.60 | **+0.06** | 8.35 | **61.1%** |
-| **7** | **Haris Rauf** | `7364` | **64.37** | 343 | 36 | **8.83** | 8.59 | **-0.25** | 9.53 | **58.8%** |
-| **8** | **Kuldeep Yadav** | `3644` | **63.45** | 407 | 36 | **8.64** | 7.85 | **-0.79** | 11.31 | **66.7%** |
-| **9** | **Rashid Khan** | `4722` | **62.18** | 707 | 62 | **8.62** | 7.02 | **-1.60** | 11.40 | **63.5%** |
-| **10** | **Adam Zampa** | `2636` | **62.12** | 320 | 34 | **8.78** | 8.22 | **-0.55** | 9.41 | **52.8%** |
+| **1** | **Sunil Narine** | `781` | **79.95** | 299 | 26 | **6.28** | 7.01 | **+0.73** | 11.50 | **83.3%** |
+| **2** | **Jasprit Bumrah** | `2933` | **73.46** | 554 | 43 | **7.18** | 7.30 | **+0.12** | 12.88 | **74.1%** |
+| **3** | **Matheesha Pathirana** | `8661` | **67.58** | 529 | 49 | **8.89** | 8.74 | **-0.15** | 10.80 | **69.4%** |
+| **4** | **Shaheen Afridi** | `6355` | **66.67** | 254 | 26 | **8.01** | 7.99 | **-0.01** | 9.77 | **69.0%** |
+| **5** | **Mitchell Santner** | `4101` | **64.45** | 322 | 23 | **7.77** | 7.37 | **-0.40** | 14.00 | **71.4%** |
+| **6** | **Haris Rauf** | `7364` | **63.59** | 343 | 36 | **8.83** | 8.59 | **-0.25** | 9.53 | **58.8%** |
+| **7** | **Rasikh Salam** | `7327` | **63.23** | 217 | 26 | **9.54** | 9.60 | **+0.06** | 8.35 | **61.1%** |
+| **8** | **Kuldeep Yadav** | `3644` | **63.16** | 407 | 36 | **8.64** | 7.85 | **-0.79** | 11.31 | **66.7%** |
+| **9** | **Rashid Khan** | `4722` | **62.62** | 707 | 62 | **8.62** | 7.02 | **-1.60** | 11.40 | **63.5%** |
+| **10** | **Yuzvendra Chahal** | `1612` | **61.44** | 575 | 53 | **9.23** | 8.39 | **-0.84** | 10.85 | **55.4%** |
 
 ---
 
@@ -80,11 +82,11 @@ This repository implements the **Rajasthan Royals Situational Pressure & Clutch 
 - **Super Overs**: Fixed maximum pressure ($PI = 1.0$).
 
 ### 2. Standardized Clutch Index (CBI)
-$$\text{CBI} = 50 + 15 \cdot \left(0.40 \cdot \mathcal{S}_{abs} + 0.30 \cdot \mathcal{S}_{lift} + 0.20 \cdot \mathcal{S}_{cons} + 0.10 \cdot \mathcal{S}_{vol}\right)$$
-- **$\mathcal{S}_{abs}$ (40%)**: Absolute pressure performance (SR, Average, Dot% for batters; Economy, Balls/Wicket, Dot% for bowlers).
-- **$\mathcal{S}_{lift}$ (30%)**: Performance delta vs player's own normal baseline ($\Delta SR$, $\Delta Avg$, Economy Resistance $\Delta ER$).
+$$\text{CBI} = 50 + 15 \cdot \left(0.35 \cdot \mathcal{S}_{abs} + 0.30 \cdot \mathcal{S}_{lift} + 0.20 \cdot \mathcal{S}_{cons} + 0.15 \cdot \mathcal{S}_{vol}\right)$$
+- **$\mathcal{S}_{abs}$ (35%)**: Absolute pressure performance (SR, Average, Dot% for batters; Economy, Balls/Wicket, Dot% for bowlers).
+- **$\mathcal{S}_{lift}$ (30%)**: Performance delta vs player's own normal baseline ($\Delta SR$, Hazard-preserved Average, Economy Resistance $\Delta ER$).
 - **$\mathcal{S}_{cons}$ (20%)**: Match-by-match reliability rate in pressure situations.
-- **$\mathcal{S}_{vol}$ (10%)**: Bayesian shrinkage confidence and opponent tier weighting ($1.0$ for elite franchise/top-9 Full Members; $0.85$ for emerging).
+- **$\mathcal{S}_{vol}$ (15%)**: Bayesian shrinkage confidence and opponent tier weighting ($1.0$ for elite franchise/top-9 Full Members; $0.85$ for emerging).
 
 ---
 
@@ -129,7 +131,6 @@ $$\text{CBI} = 50 + 15 \cdot \left(0.40 \cdot \mathcal{S}_{abs} + 0.30 \cdot \ma
    ```bash
    python3 run_model.py
    ```
-   This executes the ball-by-ball running state engine, computes $PI$, evaluates baselines, and generates `top_10_batters.csv`, `top_10_bowlers.csv`, and all figures.
 
 3. **Re-compile methodology report**:
    ```bash
