@@ -20,7 +20,6 @@ def main():
     comps = pd.read_csv('competitions.csv')
     bbb = pd.read_csv('ball_by_ball.csv')
     teams = pd.read_csv('teams.csv')
-    ctpm = pd.read_csv('competition_team_player_mapping.csv')
 
     print(f"Loaded {len(matches)} matches, {len(bbb)} ball-by-ball deliveries.")
 
@@ -130,7 +129,7 @@ def main():
     print(f"High pressure deliveries: {(bbb['is_high_pressure']).sum()} ({(bbb['is_high_pressure']).mean()*100:.1f}%)")
 
     # ==================== BATTING MODEL ====================
-    print(">>> 4. Modeling Batting Performance & Clutch Index...")
+    print(">>> 4. Modeling Batting Performance & Clutch Index (Hazard-Preserved)...")
     bat_hp = bbb[bbb['is_high_pressure'] & bbb['is_batter_ball']].groupby(['striker_id', 'striker_name']).agg(
         hp_runs=('runs', 'sum'),
         hp_balls=('runs', 'count'),
@@ -139,7 +138,6 @@ def main():
         hp_sixes=('is_six', 'sum'),
         hp_dots=('runs', lambda x: (x == 0).sum()),
         hp_matches=('match_id', 'nunique'),
-        ipl_hp_balls=('match_format', lambda x: (x == 'T20').sum()),
         avg_opp_weight=('opp_weight_bat', 'mean')
     ).reset_index()
 
@@ -158,6 +156,10 @@ def main():
     bat['sr_lift'] = bat['hp_sr'] - bat['base_sr']
     bat['hp_avg'] = bat['hp_runs'] / np.maximum(1, bat['hp_dismissals'])
     bat['base_avg'] = bat['base_runs'] / np.maximum(1, bat['base_dismissals'])
+
+    # Hazard preservation: in HP, league average drops by 32.6% (ratio = 0.674)
+    # Measures how well player maintains average relative to expected drop
+    bat['avg_preservation'] = bat['hp_avg'] - (bat['base_avg'] * 0.674)
     bat['avg_lift'] = bat['hp_avg'] - bat['base_avg']
     bat['hp_boundary_pct'] = (bat['hp_fours'] + bat['hp_sixes']) / bat['hp_balls'] * 100
     bat['hp_dot_pct'] = bat['hp_dots'] / bat['hp_balls'] * 100
@@ -190,15 +192,14 @@ def main():
     score_abs_bat = 0.40 * z_hp_sr + 0.30 * z_hp_avg + 0.15 * z_hp_bnd + 0.15 * z_hp_dot
 
     z_sr_lift = stats.zscore(bat_el['sr_lift'])
-    z_avg_lift = stats.zscore(bat_el['avg_lift'])
-    score_lift_bat = 0.60 * z_sr_lift + 0.40 * z_avg_lift
+    z_avg_pres = stats.zscore(bat_el['avg_preservation'])
+    score_lift_bat = 0.65 * z_sr_lift + 0.35 * z_avg_pres
 
     z_cons_bat = stats.zscore(bat_el['consistency_rate'])
-
     vol_weight_bat = np.log1p(bat_el['hp_balls']) / np.log1p(bat_el['hp_balls'].max())
     z_vol_bat = stats.zscore(vol_weight_bat * bat_el['avg_opp_weight'])
 
-    bat_el['raw_cbi'] = 0.40 * score_abs_bat + 0.30 * score_lift_bat + 0.20 * z_cons_bat + 0.10 * z_vol_bat
+    bat_el['raw_cbi'] = 0.35 * score_abs_bat + 0.30 * score_lift_bat + 0.20 * z_cons_bat + 0.15 * z_vol_bat
     bat_el['CBI_score'] = 50 + 15 * bat_el['raw_cbi']
     bat_el = bat_el.sort_values('CBI_score', ascending=False).reset_index(drop=True)
     bat_el['rank'] = bat_el.index + 1
@@ -208,7 +209,7 @@ def main():
     bat_el.to_csv('all_batters_metrics.csv', index=False)
 
     # ==================== BOWLING MODEL ====================
-    print(">>> 5. Modeling Bowling Performance & Clutch Index...")
+    print(">>> 5. Modeling Bowling Performance & Clutch Index (Volume-Regularized)...")
     bowl_hp = bbb[bbb['is_high_pressure']].groupby(['bowler_id', 'bowler_name']).agg(
         hp_legal=('is_legal', 'sum'),
         hp_runs_conceded=('bowler_runs_conceded', 'sum'),
@@ -216,7 +217,6 @@ def main():
         hp_dots=('bowler_runs_conceded', lambda x: (x == 0).sum()),
         hp_boundaries=('is_four', lambda x: (x | bbb.loc[x.index, 'is_six']).sum()),
         hp_matches=('match_id', 'nunique'),
-        ipl_hp_legal=('match_format', lambda x: (bbb.loc[x.index, 'match_format'] == 'T20').sum()),
         avg_opp_weight=('opp_weight_bowl', 'mean')
     ).reset_index()
 
@@ -256,10 +256,8 @@ def main():
     bowl['qual_hp_matches'] = bowl['qual_hp_matches'].fillna(0)
     bowl['consistency_rate'] = bowl['consistency_rate'].fillna(0.40)
 
-    # Eligibility: min 200 HP legal balls bowled and >= 12 qual HP matches
     bowl_el = bowl[(bowl['hp_legal'] >= 200) & (bowl['qual_hp_matches'] >= 12)].copy()
 
-    # Bowling Z-scores
     z_hp_econ = stats.zscore(-bowl_el['hp_econ'])
     z_hp_bsr = stats.zscore(-bowl_el['hp_sr'])
     z_hp_dot_b = stats.zscore(bowl_el['hp_dot_pct'])
@@ -271,11 +269,10 @@ def main():
     score_lift_bowl = 0.60 * z_econ_res + 0.40 * z_wkt_lift
 
     z_cons_bowl = stats.zscore(bowl_el['consistency_rate'])
-
     vol_weight_bowl = np.log1p(bowl_el['hp_legal']) / np.log1p(bowl_el['hp_legal'].max())
     z_vol_bowl = stats.zscore(vol_weight_bowl * bowl_el['avg_opp_weight'])
 
-    bowl_el['raw_cbi'] = 0.40 * score_abs_bowl + 0.30 * score_lift_bowl + 0.20 * z_cons_bowl + 0.10 * z_vol_bowl
+    bowl_el['raw_cbi'] = 0.35 * score_abs_bowl + 0.30 * score_lift_bowl + 0.20 * z_cons_bowl + 0.15 * z_vol_bowl
     bowl_el['CBI_score'] = 50 + 15 * bowl_el['raw_cbi']
     bowl_el = bowl_el.sort_values('CBI_score', ascending=False).reset_index(drop=True)
     bowl_el['rank'] = bowl_el.index + 1
@@ -338,7 +335,7 @@ def main():
     ax.set_title('Bowling Clutch Performance: High-Pressure Economy vs Economy Resistance (vs Baseline)', fontsize=14, fontweight='bold', pad=15)
     ax.set_xlabel('Economy Resistance (Baseline Economy - HP Economy, Higher = Better)', fontsize=12)
     ax.set_ylabel('High-Pressure Economy Rate (Lower = Better)', fontsize=12)
-    ax.invert_yaxis() # Invert y so lower economy is visually higher
+    ax.invert_yaxis()
     ax.legend(loc='lower left', frameon=True, facecolor='white')
     plt.tight_layout()
     plt.savefig('fig3_bowling_clutch_matrix.png')
@@ -347,17 +344,15 @@ def main():
     # FIG 4: Top 10 Summary Infographic
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6.5), dpi=300)
     
-    # Batters horizontal bar
     bat_sorted = top10_batters.sort_values('CBI_score', ascending=True)
     bars1 = ax1.barh(bat_sorted['striker_name'].str.replace('Namboori ', ''), bat_sorted['CBI_score'], color='#E6007E', alpha=0.85, edgecolor='#002D62')
-    ax1.set_xlim(50, 75)
+    ax1.set_xlim(55, 75)
     ax1.set_title('Top 10 Batters Under Pressure (CBI Score)', fontsize=13, fontweight='bold')
     ax1.set_xlabel('Clutch Batting Index Score')
     for bar in bars1:
         w = bar.get_width()
         ax1.text(w + 0.3, bar.get_y() + bar.get_height()/2, f'{w:.1f}', va='center', ha='left', fontsize=9, fontweight='bold')
 
-    # Bowlers horizontal bar
     bowl_sorted = top10_bowlers.sort_values('CBI_score', ascending=True)
     bars2 = ax2.barh(bowl_sorted['bowler_name'], bowl_sorted['CBI_score'], color='#002D62', alpha=0.85, edgecolor='#E6007E')
     ax2.set_xlim(55, 85)
@@ -375,4 +370,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
